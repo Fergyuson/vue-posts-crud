@@ -23,6 +23,6 @@ defineEmits(['delete'])
       {{ comment.body }}
     </p>
 
-    <button @click="$emit('delete', comment.id)">Удалить</button>
+    <button @click="$emit('delete', comment)">Удалить</button>
   </article>
 </template>

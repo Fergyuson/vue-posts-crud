@@ -1,44 +1,47 @@
-# .
+# Vue Posts CRUD
 
-This template should help get you started developing with Vue 3 in Vite.
+Небольшое учебное SPA-приложение на Vue 3 для просмотра постов и комментариев с использованием [JSONPlaceholder](https://jsonplaceholder.typicode.com/).
 
-## Recommended IDE Setup
+## Возможности
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- Список постов с карточками и переходом на страницу поста.
+- Просмотр одного поста и комментариев к нему.
+- Редактирование текста поста (`PATCH`).
+- Создание комментария (`POST`) и удаление комментария (`DELETE`).
+- Переход к профилю автора поста и обратно.
+- Состояния загрузки, обработка ошибок и адаптивная вёрстка.
 
-## Recommended Browser Setup
+## Технологии
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+Vue 3 (Composition API), Vue Router, JavaScript, Fetch API, Vite, CSS Grid/Flexbox.
 
-## Customize configuration
+## Запуск локально
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+Требуется Node.js версии, указанной в `package.json` (`engines`).
 
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
+```bash
+npm ci
 npm run dev
 ```
 
-### Compile and Minify for Production
+Сборка и проверка кода:
 
-```sh
+```bash
 npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
 npm run lint
+npm audit
 ```
+
+## Организация кода
+
+- `src/api/` — обращения к JSONPlaceholder.
+- `src/views/` — страницы приложения.
+- `src/components/` — карточки и редактируемое содержимое поста.
+- `src/router/` — маршруты `/`, `/posts/:id`, `/users/:id`.
+- `src/assets/main.css` — стили приложения.
+
+## Особенности тестового API
+
+JSONPlaceholder **имитирует** операции создания, обновления и удаления. Ответы на `POST`, `PATCH` и `DELETE` успешны, но изменения на сервере не сохраняются: после обновления страницы загружаются исходные данные.
+
+Для демонстрации результата приложение обновляет локальное реактивное состояние после успешного ответа API. Поскольку JSONPlaceholder может возвращать одинаковый серверный `id` для нескольких добавленных комментариев, вновь созданным комментариям дополнительно назначается уникальный `localId` для отображения и корректного локального удаления.

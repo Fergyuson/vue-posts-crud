@@ -1,54 +1,97 @@
+
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, watch, computed } from 'vue'
+import { useRoute, RouterLink } from 'vue-router'
+import { getUser } from '@/api/users.js'
 
 const route = useRoute()
+
+const returnPostId = computed(() => {
+  const id = Number(route.query.fromPost)
+
+  return Number.isSafeInteger(id) && id > 0 ? id : null
+})
 
 const user = ref(null)
 const isLoading = ref(true)
 const error = ref(null)
 
-const getUser = async () => {
+const loadUser = async (id) => {
   isLoading.value = true
   error.value = null
+  user.value = null
 
-    try {
-      const response = await fetch(
-        `https://jsonplaceholder.typicode.com/users/${route.params.id}`
-      )
-
-      if (!response.ok) {
-        throw new Error(
-          `Не удалось загрузить пользователя. Код ошибки: ${response.status}`
-        )
-      }
-
-      user.value = await response.json()
-    } catch (err) {
-      error.value = err.message
-    } finally {
-      isLoading.value = false
-    }
+  try {
+    user.value = await getUser(id)
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    isLoading.value = false
+  }
 }
 
-
-onMounted(getUser)
+watch(
+  () => route.params.id,
+  (id) => loadUser(id),
+  { immediate: true }
+)
 </script>
-    <template>
-  <main>
-    <p v-if="isLoading">
-      Загрузка...
+
+<template>
+  <main class="user-page">
+     <RouterLink
+      :to="returnPostId ? `/posts/${returnPostId}` : '/'"
+      class="back-link"
+    >
+      {{ returnPostId ? '← Назад к посту' : '← Назад ко всем постам' }}
+    </RouterLink>
+
+    <p v-if="isLoading" class="user-status">
+      Загрузка пользователя...
     </p>
 
-    <p v-else-if="error">
+    <p v-else-if="error" class="user-status" role="alert">
       {{ error }}
     </p>
 
-    <div v-else>
-      <h1>{{ user.name }}</h1>
-      <p>{{ user.email }}</p>
-      <p>{{ user.address.city }}</p>
-    </div>
+    <article v-else class="user-card">
+      <div class="user-card__header">
+        <span class="user-card__label">
+          Профиль пользователя
+        </span>
+
+        <h1>{{ user.name }}</h1>
+
+        <p class="user-card__username">
+          @{{ user.username }}
+        </p>
+      </div>
+
+      <div class="user-card__content">
+        <h2>Контактная информация</h2>
+
+        <dl class="user-details">
+          <div class="user-details__item">
+            <dt>Email</dt>
+            <dd>{{ user.email }}</dd>
+          </div>
+
+          <div class="user-details__item">
+            <dt>Город</dt>
+            <dd>{{ user.address.city }}</dd>
+          </div>
+
+          <div class="user-details__item">
+            <dt>Телефон</dt>
+            <dd>{{ user.phone }}</dd>
+          </div>
+
+          <div class="user-details__item">
+            <dt>Сайт</dt>
+            <dd>{{ user.website }}</dd>
+          </div>
+        </dl>
+      </div>
+    </article>
   </main>
 </template>
-

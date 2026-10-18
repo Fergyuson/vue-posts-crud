@@ -1,121 +1,195 @@
-<script setup>
-import { ref, onMounted } from 'vue'
 
-import { useRoute } from 'vue-router'
+<script setup>
+import { ref, watch } from 'vue'
+import { useRoute, RouterLink } from 'vue-router'
+
+import {
+  getPost,
+  getComments,
+  updatePost,
+  deleteComment,
+  createComment,
+} from '@/api/posts.js'
 
 import PostContent from '@/components/PostContent.vue'
-
 import CommentCard from '@/components/CommentCard.vue'
 
 const route = useRoute()
+let nextLocalId = -1
 
 const post = ref(null)
-
 const comments = ref([])
 
+const editBody = ref('')
+const isEditing = ref(false)
+const isSaving = ref(false)
+
+const newComment = ref('')
+const isAdding = ref(false)
+
 const isLoading = ref(true)
-
 const error = ref(null)
+const actionError = ref(null)
 
-const getData = async () => {
+let currentLoadId = 0
+
+const loadData = async (id) => {
+  const loadId = ++currentLoadId
+
+  isLoading.value = true
+  error.value = null
+  actionError.value = null
+  post.value = null
+  comments.value = []
+  editBody.value = ''
+  newComment.value = ''
+  isEditing.value = false
+
   try {
-    const [postResponse, commentsResponse] = await Promise.all([
-      fetch(`https://jsonplaceholder.typicode.com/posts/${route.params.id}`),
-
-      fetch(`https://jsonplaceholder.typicode.com/posts/${route.params.id}/comments`),
+    const [postData, commentsData] = await Promise.all([
+      getPost(id),
+      getComments(id),
     ])
 
-    post.value = await postResponse.json()
+    
+    if (loadId !== currentLoadId) return
 
-    comments.value = await commentsResponse.json()
+    post.value = postData
+    comments.value = commentsData
+    editBody.value = postData.body
   } catch (err) {
-    error.value = err.message
+    if (loadId === currentLoadId) {
+      error.value = err.message
+    }
   } finally {
-    isLoading.value = false
+    if (loadId === currentLoadId) {
+      isLoading.value = false
+    }
   }
 }
 
-const updatePost = async (body) => {
-  const response = await fetch(
-    `https://jsonplaceholder.typicode.com/posts/${route.params.id}`,
+const savePost = async () => {
+  if (!editBody.value.trim() || isSaving.value) return
 
-    {
-      method: 'PATCH',
+  isSaving.value = true
+  actionError.value = null
 
-      headers: {
-        'Content-Type': 'application/json',
-      },
+  try {
+    const data = await updatePost(
+      route.params.id,
+      editBody.value
+    )
 
-      body: JSON.stringify({
-        body,
-      }),
-    },
-  )
+    post.value = { ...post.value, ...data }
+    editBody.value = post.value.body
+    isEditing.value = false
 
-  const data = await response.json()
-
-  post.value = data
+  } catch (err) {
+    actionError.value = err.message
+  } finally {
+    isSaving.value = false
+  }
 }
 
-const deleteComment = (id) => {
-  comments.value = comments.value.filter((comment) => comment.id !== id)
-}
+const removeComment = async (comment) => {
+  actionError.value = null
 
-const newComment = ref('')
+  try {
+    await deleteComment(comment.id)
+
+    const idToRemove = comment.localId ?? comment.id
+
+    comments.value = comments.value.filter(
+      item => (item.localId ?? item.id) !== idToRemove
+    )
+
+  } catch (err) {
+    actionError.value = err.message
+  }
+}
 
 const addComment = async () => {
-  const response = await fetch('https://jsonplaceholder.typicode.com/comments', {
-    method: 'POST',
+  const body = newComment.value.trim()
 
-    headers: {
-      'Content-Type': 'application/json',
-    },
+  if (!body || isAdding.value) return
 
-    body: JSON.stringify({
+  isAdding.value = true
+  actionError.value = null
+
+  try {
+    const data = await createComment({
       postId: Number(route.params.id),
       name: 'User',
       email: 'user@mail.com',
-      body: newComment.value,
-    }),
-  })
+      body,
+    })
 
-  const data = await response.json()
+    comments.value.push({
+      ...data,
+      localId: nextLocalId--
+    })
+    newComment.value = ''
 
-  comments.value.push(data)
-
-  newComment.value = ''
+  } catch (err) {
+    actionError.value = err.message
+  } finally {
+    isAdding.value = false
+  }
 }
 
-onMounted(getData)
+watch(
+  () => route.params.id,
+  (id) => loadData(id),
+  { immediate: true }
+)
 </script>
 
 <template>
   <main class="post-page">
-
-    <RouterLink
-      to="/"
-      class="back-link"
-    >
+    <RouterLink to="/" class="back-link">
       ← Назад к постам
     </RouterLink>
 
-    <p v-if="isLoading">Загрузка...</p>
+    <p v-if="isLoading">
+      Загрузка...
+    </p>
 
-    <p v-else-if="error">
+    <p v-else-if="error" role="alert">
       {{ error }}
     </p>
 
     <div v-else>
-      <PostContent :post="post" @update="updatePost" />
+      <p v-if="actionError" role="alert">
+        {{ actionError }}
+      </p>
 
-      <section>
+      <PostContent
+        :post="post"
+        v-model:body="editBody"
+        v-model:editing="isEditing"
+        :is-saving="isSaving"
+        @save="savePost"
+      />
+      <RouterLink
+        :to="{
+          name: 'user',
+          params: { id: post.userId },
+          query: { fromPost: post.id }
+        }"
+        class="author-link"
+      >
+        Посмотреть автора поста
+      </RouterLink>
+
+      <section class="comments-section">
         <h2>Комментарии</h2>
+
         <div class="comments-grid">
           <CommentCard
             v-for="comment in comments"
-            :key="comment.id"
+            :key="comment.localId ?? comment.id"
             :comment="comment"
-            @delete="deleteComment"
+            @delete="removeComment"
           />
         </div>
       </section>
@@ -123,13 +197,17 @@ onMounted(getData)
       <section class="add-comment">
         <h2>Добавить комментарий</h2>
 
-        <textarea v-model="newComment" placeholder="Введите комментарий"></textarea>
+        <textarea
+          v-model="newComment"
+          placeholder="Введите комментарий"
+        ></textarea>
 
-        <button 
+        <button
           class="add-comment__button"
+          :disabled="isAdding || !newComment.trim()"
           @click="addComment"
         >
-          Добавить
+          {{ isAdding ? 'Добавление...' : 'Добавить' }}
         </button>
       </section>
     </div>

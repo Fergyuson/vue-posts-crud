@@ -175,6 +175,26 @@ textarea {
   resize: vertical;
 }
 
+.author-link {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 20px;
+  padding: 12px 20px;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: #fff;
+  color: #2563eb;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.2s ease;
+}
+
+.author-link:hover {
+  background: #2563eb;
+  color: #fff;
+}
+
 .add-comment {
   margin-top: 40px;
   padding: 32px;
@@ -235,6 +255,92 @@ textarea {
   color: white;
 }
 
+
+.user-page {
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.user-card {
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.user-card__header {
+  padding: 32px;
+  background: #eff6ff;
+  border-bottom: 1px solid #dbeafe;
+}
+
+.user-card__label {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.user-card__header h1 {
+  margin: 0 0 10px;
+  font-size: 30px;
+  line-height: 1.3;
+}
+
+.user-card__username {
+  margin: 0;
+  color: #64748b;
+  font-size: 16px;
+}
+
+.user-card__content {
+  padding: 32px;
+}
+
+.user-card__content h2 {
+  margin: 0 0 24px;
+  font-size: 22px;
+}
+
+.user-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin: 0;
+}
+
+.user-details__item {
+  min-width: 0;
+}
+
+.user-details dt {
+  margin-bottom: 8px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.user-details dd {
+  margin: 0;
+  color: #111827;
+  font-size: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.user-status {
+  padding: 24px;
+  background: #fff;
+  border-radius: 14px;
+  color: #475569;
+}
+
+
+
 @media (max-width: 900px) {
   .posts-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -261,5 +367,23 @@ textarea {
 
   .post-content h1 {
     font-size: 24px;
+  }
+
+  .user-page {
+    padding: 24px 16px;
+  }
+
+  .user-card__header,
+  .user-card__content {
+    padding: 24px 20px;
+  }
+
+  .user-card__header h1 {
+    font-size: 24px;
+  }
+
+  .user-details {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
 }
